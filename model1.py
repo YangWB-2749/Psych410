@@ -26,7 +26,13 @@ m00=(0,0)
 # m10=(-1,1)
 # m00=(0,0)
 
-#deterrence
+#deterrer
+# m11=(0,0)
+# m01=(-100,-100)
+# m10=(-100,10)
+# m00=(-100,-100)
+
+#deteree
 # m11=(0,0)
 # m01=(10,-100)
 # m10=(-100,-100)
@@ -85,8 +91,8 @@ for b in opponent_action:
     #expected gain by changing from cooperate to cheat in both situation
     ea=(m01[0]-m11[0])*pb1+(m00[0]-m10[0])*pb0
     #expected gain of opponent
-    pb0=max(0.01,pb0)#still set a lower boundary to avoid divided by 0, and more than 0.001 to avoid overflow exponent
-    cooperate_factor=pb1/pb0
+    pb0=max(0.25,pb0)#still set a lower boundary to avoid divided by 0, and more than 0.001 to avoid overflow exponent
+    cooperate_factor=pb1/pb0#pb1*4#
     #consider opponent gain by changing from cheat to cooperate, with altruism and probability variable
     eb=(m11[1]-m01[1])*pb0+(m10[1]-m00[1])*pb1+altruism+cooperate_factor
     print(ea,eb)
@@ -103,18 +109,21 @@ for b in opponent_action:
     
 
 import matplotlib.pyplot as plt
+#black line, probability to cooperate
 plt.plot(pa1s,"k-")
+#dash line, expected opponent cooperate probability
 plt.plot(pb1s,"--")
-for i in range(len(ha)):
+
+for i in range(len(opponent_action)):
     if ha[i]:
-        plt.plot(i,-0.05,"g.")
+        plt.plot(i,pa1s[i],"gx")
     else:
-        plt.plot(i,-0.05,"r.")
-for i in range(len(hb)):
+        plt.plot(i,pa1s[i],"rx")
+        
     if hb[i]:
-        plt.plot(i-0.5,pa1s[i],"g.")
+        plt.plot(i-0.5,pa1s[i],"g2")
     else:
-        plt.plot(i-0.5,pa1s[i],"r.")
+        plt.plot(i-0.5,pa1s[i],"r1")
 # plt.plot()
 plt.ylim(-0.1,1.1)
 plt.show()
