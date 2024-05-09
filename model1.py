@@ -11,10 +11,10 @@ opponent_action=[1]*5+[0]*10+[1]*10+[0,1]*10
 #first number is whether self cooperate or cheat, second is opponent's
 
 #evolution of trust version
-m11=(1,1)
-m01=(2,-1)
-m10=(-1,2)
-m00=(0,0)
+# m11=(1,1)
+# m01=(2,-1)
+# m10=(-1,2)
+# m00=(0,0)
 
 #evolution of cooperation version
 # m11=(3,3)
@@ -39,6 +39,14 @@ m00=(0,0)
 # m01=(10,-100)
 # m10=(-100,-100)
 # m00=(-100,-100)
+
+#another version
+#INFERRING STRATEGIES FROM OBSERVATIONS IN LONG ITERATED PRISONER’S DILEMMA EXPERIMENTS
+#https://arxiv.org/pdf/2202.04171v1
+m11=(3,3)
+m01=(4,0)
+m10=(0,4)
+m00=(1,1)
 
 #standardize the matrix
 matrix=np.array([[m00,m01],[m10,m11]])

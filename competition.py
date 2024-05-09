@@ -38,10 +38,7 @@ def decision(altruism,decay,side,hb):
     eb=(m11[1]-m01[1])*pb0+(m10[1]-m00[1])*pb1+altruism+cooperate_factor
     #softmax to acquire probability
     pa1=np.exp(eb)/(np.exp(eb)+np.exp(ea))
-    a=1
-    if random.random()>pa1:
-        a=0
-    return a,pa1
+    return pa1
     
     
 
@@ -53,10 +50,10 @@ p2s=[]
 n=400
 
 for i in range(n):
-    decision1,p1=decision(altruism1,decay1,0,h2)
-    decision2,p2=decision(altruism2,decay2,1,h1)
-    h1.append(decision1)
-    h2.append(decision2)
+    p1=decision(altruism1,decay1,0,h2)
+    p2=decision(altruism2,decay2,1,h1)
+    h1.append(p1>random.random())
+    h2.append(p2>random.random())
     p1s.append(p1)
     p2s.append(p2)
 print(h1,h2)
