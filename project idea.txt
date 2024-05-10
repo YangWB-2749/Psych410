@@ -1,0 +1,17 @@
+利他行为模型与个人或社会层面博弈收益，可能会偏离到一点社会学人类学什么的。打字后带括号的解释种类原因与他人理解（int argc, char* argv）。模拟人脑遗忘功能。巴纳姆效应。安慰剂与反安慰剂，但没查过如何建模型。一些先天性行为的自然选择，可能有些生物学。
+
+
+Develop a new model. Develop a model of some aspect of psychology. You may find it useful to think about capturing some ability that people display in everyday life, or accounting for some existing result in the psychological literature. Your model can be an extension or modification of one of the models discussed in class.
+
+Implement and apply a model. Implement some existing model of cognition (one that you didn't implement as a homework assignment) and apply it to a new data set. Report on how the model performs and analyze the ways in which it succeeds or fails. 
+
+Compute: In real data, probability of (True, Flase) given 3_ previous choices. Model predicts probabilty based on a altruism etc.- parameter-based algorithm. 
+
+# utility = estimated gain = willingness 
+
+110101010101001111000011000
+Testant: 010101011100000 (statistic about frequency )
+
+write a statistic table for this 4*4 grid. 
+
+Decay: How many 
