@@ -15,7 +15,9 @@ competitions=[]
 competition_num=df.shape[0]//100
 for i in range(competition_num):
     competitions.append(df[100*i:100*i+100])
-# print(competitions)
+
+#the opponent action history length that will be used to predict next. 
+history_length=4
 
 #input a list and decay rate, return the probability for next decision is cooperate
 def next_probability(l,decay):
@@ -29,7 +31,7 @@ def next_probability(l,decay):
         b+=factor
         factor*=(1-decay)
     return a/b
-def decision(altruism,decay,side,hb):
+def decision(altruism,decay,hb):
     pb1=next_probability(hb,decay)
     pb0=1-pb1
     
@@ -47,18 +49,69 @@ def decision(altruism,decay,side,hb):
     pa1=np.exp(eb)/(np.exp(eb)+np.exp(ea))
     return pa1
 
+#Find the best result by tuning hyperparameter of the model to fit in the input distribution
+def model_best(response,action):
+    altruism=0
+    decay=0
+    best_accuracy=0
+    probabilities=0
+    #perform grid search on altruism
+    for d in range(1,10):
+        for a in range(-10,5):
+            for i in range(2**history_length):
+                h=[int(j) for j in bin(i)[2:].zfill(history_length)]
+                distribution.append(decision(a,d,h))
+            #compare distribution to real response and action
+            accuracy=0
+            if accuracy>best_accuracy:
+                best_accuracy=accuracy
+                decay=d
+                altruism=a
+    return altruism,decay,probabilities
+
+
+
 for competition in competitions:
     action_player=[i=="C" for i in competition["action_player"]]
     action_opponent=[i=="C" for i in competition["action_opponent"]]
-    print(action_player)
-    print(action_opponent)
-    for i in range(100):
-        print(i,action_player[i],action_opponent[i])
-    plt.plot(action_player[1:])
-    #change variables for better fit
-    expected_action=[decision(-3,0.3,0,action_opponent[1:i]) for i in range(1,100)]
-    plt.plot(expected_action)
-    plt.show()
-    #ways to evaluate prediction accuracy
-        
+    
+    #count the occurance of each pattern in history_length
+    #number for 0000, 0001, 0010, 0011, ... , 1110, 1111
+    #Given self action, the probability the opponent would cooperate
+    frequency_action_opponent_cooperate=[0]*(2**history_length)
+    frequency_action_self=[0]*(2**history_length)
+    for i in range(10,100):
+        action=action_player[i-history_length:i-1]
+        #convert bit 8421 to integer
+        index=0
+        for a in action:
+            index*=2
+            index+=a
+        frequency_action_self[index]+=1
+        if action_opponent[i]==1:
+            frequency_action_opponent_cooperate[index]+=1
+    distribution=[]
+    for i in range(2**history_length):
+        print(bin(i),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
+        if frequency_action_self[i]:
+            distribution.append(frequency_action_opponent_cooperate[i]/frequency_action_self[i])
+        else:
+            distribution.append(-1)
+    print(distribution)
+    # accuracy=model_best(frequency_action_opponent_cooperate,frequency_action_self)
+    # print(accuracy)
+    
     break
+    
+    
+    # print(action_player)
+    # print(action_opponent)
+    # for i in range(100):
+    #     print(i,action_player[i],action_opponent[i])
+    # plt.plot(action_player[1:])
+    # # change variables for better fit
+    # expected_action=[decision(-3,0.3,action_opponent[1:i]) for i in range(1,100)]
+    # plt.plot(expected_action)
+    # plt.show()
+    # # ways to evaluate prediction accuracy
+    # break
