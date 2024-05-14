@@ -58,14 +58,14 @@ def model_best(response,action):
     decay=0
     min_error=10000
     #perform grid search on altruism
-    for d in range(1,10):
+    for d in range(0,11):#search from 0 to 1 with interval of 0.1
         d/=10
-        for a in range(-100,50):
+        for a in range(-100,50):#search from -10 to 5 with interval of 0.1
             a/=10
             acc_error=0
             for i in range(2**history_length):
                 #if such pattern appear less than threshold in the action, go next loop
-                if action[i]<threshold:
+                if action[i]==0:#<threshold:
                     continue
                 h=[int(j) for j in bin(i)[2:].zfill(history_length)]
                 p=decision(a,d,h)
@@ -78,10 +78,13 @@ def model_best(response,action):
                 decay=d
                 altruism=a
     return altruism,decay,min_error
+errors=[]
 
-
-
+counter=0
 for competition in competitions:
+    # counter+=1
+    # if counter>10:
+    #     break
     action_player=[i=="C" for i in competition["action_player"]]
     action_opponent=[i=="C" for i in competition["action_opponent"]]
     
@@ -92,7 +95,7 @@ for competition in competitions:
     frequency_action_self=[0]*(2**history_length)
     #jump over several initial warm up rounds
     for i in range(10,100):
-        action=action_player[i-history_length:i-1]
+        action=action_player[i-history_length-1:i-1]
         #convert bit 8421 to integer
         index=0
         for a in action:
@@ -109,20 +112,9 @@ for competition in competitions:
         else:
             distribution.append(-1)
     print(distribution)
-    accuracy=model_best(frequency_action_opponent_cooperate,frequency_action_self)
-    print(accuracy)
+    estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_opponent_cooperate,frequency_action_self)
+    print(estimated_altruism,estimated_decay,estimated_error/90)
     
+    errors.append(estimated_error/90)
     break
-    
-    
-    # print(action_player)
-    # print(action_opponent)
-    # for i in range(100):
-    #     print(i,action_player[i],action_opponent[i])
-    # plt.plot(action_player[1:])
-    # # change variables for better fit
-    # expected_action=[decision(-3,0.3,action_opponent[1:i]) for i in range(1,100)]
-    # plt.plot(expected_action)
-    # plt.show()
-    # # ways to evaluate prediction accuracy
-    # break
+print(errors,sum(errors)/len(errors))
