@@ -72,8 +72,7 @@ decay=0.3
 
 #input a list and decay rate, return the probability for next decision is cooperate
 def next_probability(l,decay):
-    if len(l)==0:
-        return 1
+    l=[1]+l
     a=0
     b=0
     factor=1

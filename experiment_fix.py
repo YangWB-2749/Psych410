@@ -18,11 +18,14 @@ for i in range(competition_num):
 
 #the opponent action history length that will be used to predict next. 
 history_length=4
+#minimum number of pattern that would be considered as valid
+#for example, if 0000 appears for 9 times, and 0001 appears for 10 times, and 10 is threshold
+#then only that for 0001 would be considered
+threshold=5
 
 #input a list and decay rate, return the probability for next decision is cooperate
 def next_probability(l,decay):
-    if len(l)==0:
-        return 1
+    l=[1]+l
     a=0
     b=0
     factor=1
@@ -53,21 +56,28 @@ def decision(altruism,decay,hb):
 def model_best(response,action):
     altruism=0
     decay=0
-    best_accuracy=0
-    probabilities=0
+    min_error=10000
     #perform grid search on altruism
     for d in range(1,10):
-        for a in range(-10,5):
+        d/=10
+        for a in range(-100,50):
+            a/=10
+            acc_error=0
             for i in range(2**history_length):
+                #if such pattern appear less than threshold in the action, go next loop
+                if action[i]<threshold:
+                    continue
                 h=[int(j) for j in bin(i)[2:].zfill(history_length)]
-                distribution.append(decision(a,d,h))
+                p=decision(a,d,h)
+                
+                acc_error+=action[i]*abs(p-(response[i]/action[i]))
+                distribution.append(p)
             #compare distribution to real response and action
-            accuracy=0
-            if accuracy>best_accuracy:
-                best_accuracy=accuracy
+            if min_error>acc_error:
+                min_error=acc_error
                 decay=d
                 altruism=a
-    return altruism,decay,probabilities
+    return altruism,decay,min_error
 
 
 
@@ -80,6 +90,7 @@ for competition in competitions:
     #Given self action, the probability the opponent would cooperate
     frequency_action_opponent_cooperate=[0]*(2**history_length)
     frequency_action_self=[0]*(2**history_length)
+    #jump over several initial warm up rounds
     for i in range(10,100):
         action=action_player[i-history_length:i-1]
         #convert bit 8421 to integer
@@ -92,14 +103,14 @@ for competition in competitions:
             frequency_action_opponent_cooperate[index]+=1
     distribution=[]
     for i in range(2**history_length):
-        print(bin(i),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
+        print(bin(i)[2:].zfill(history_length),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
         if frequency_action_self[i]:
             distribution.append(frequency_action_opponent_cooperate[i]/frequency_action_self[i])
         else:
             distribution.append(-1)
     print(distribution)
-    # accuracy=model_best(frequency_action_opponent_cooperate,frequency_action_self)
-    # print(accuracy)
+    accuracy=model_best(frequency_action_opponent_cooperate,frequency_action_self)
+    print(accuracy)
     
     break
     
