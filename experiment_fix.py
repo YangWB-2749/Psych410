@@ -9,6 +9,15 @@ m01=(4,0)
 m10=(0,4)
 m00=(1,1)
 
+#standardize the matrix
+matrix=np.array([[m00,m01],[m10,m11]])
+norm=(matrix-matrix.mean())/matrix.std()
+
+m11=norm[1,1]
+m01=norm[0,1]
+m10=norm[1,0]
+m00=norm[0,0]
+
 df=pd.read_csv("./fix.csv",sep=";")
 
 competitions=[]
@@ -21,7 +30,7 @@ history_length=4
 #minimum number of pattern that would be considered as valid
 #for example, if 0000 appears for 9 times, and 0001 appears for 10 times, and 10 is threshold
 #then only that for 0001 would be considered
-threshold=5
+# threshold=5
 
 #input a list and decay rate, return the probability for next decision is cooperate
 def next_probability(l,decay):
@@ -56,7 +65,7 @@ def decision(altruism,decay,hb):
 def model_best(response,action):
     altruism=0
     decay=0
-    min_error=10000
+    min_error=100
     #perform grid search on altruism
     for d in range(0,11):#search from 0 to 1 with interval of 0.1
         d/=10
@@ -78,12 +87,12 @@ def model_best(response,action):
                 decay=d
                 altruism=a
     return altruism,decay,min_error
-errors=[]
 
+errors=[]
 counter=0
 for competition in competitions:
     # counter+=1
-    # if counter>10:
+    # if counter>50:
     #     break
     action_player=[i=="C" for i in competition["action_player"]]
     action_opponent=[i=="C" for i in competition["action_opponent"]]
@@ -94,7 +103,7 @@ for competition in competitions:
     frequency_action_opponent_cooperate=[0]*(2**history_length)
     frequency_action_self=[0]*(2**history_length)
     #jump over several initial warm up rounds
-    for i in range(10,100):
+    for i in range(history_length,100):
         action=action_player[i-history_length-1:i-1]
         #convert bit 8421 to integer
         index=0
@@ -106,15 +115,49 @@ for competition in competitions:
             frequency_action_opponent_cooperate[index]+=1
     distribution=[]
     for i in range(2**history_length):
-        print(bin(i)[2:].zfill(history_length),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
+        # print(bin(i)[2:].zfill(history_length),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
         if frequency_action_self[i]:
             distribution.append(frequency_action_opponent_cooperate[i]/frequency_action_self[i])
         else:
             distribution.append(-1)
-    print(distribution)
+    # print(distribution)
     estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_opponent_cooperate,frequency_action_self)
-    print(estimated_altruism,estimated_decay,estimated_error/90)
+    # print(estimated_altruism,estimated_decay,estimated_error/90)
     
-    errors.append(estimated_error/90)
-    break
+    errors.append(estimated_error/(100-history_length))
+    
+    
+    
+    
+    
+    frequency_action_opponent_cooperate=[0]*(2**history_length)
+    frequency_action_self=[0]*(2**history_length)
+    #jump over several initial warm up rounds
+    for i in range(history_length,100):
+        action=action_opponent[i-history_length-1:i-1]
+        #convert bit 8421 to integer
+        index=0
+        for a in action:
+            index*=2
+            index+=a
+        frequency_action_self[index]+=1
+        if action_player[i]==1:
+            frequency_action_opponent_cooperate[index]+=1
+    distribution=[]
+    for i in range(2**history_length):
+        # print(bin(i)[2:].zfill(history_length),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
+        if frequency_action_self[i]:
+            distribution.append(frequency_action_opponent_cooperate[i]/frequency_action_self[i])
+        else:
+            distribution.append(-1)
+    # print(distribution)
+    estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_opponent_cooperate,frequency_action_self)
+    # print(estimated_altruism,estimated_decay,estimated_error/90)
+    
+    errors.append(estimated_error/(100-history_length))
+    
+    # break
 print(errors,sum(errors)/len(errors))
+
+plt.hist(errors)
+plt.show()
