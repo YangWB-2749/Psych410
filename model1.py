@@ -133,8 +133,8 @@ for i in range(len(opponent_action)):
     #     plt.plot(i,pa1s[i],"rx")
         
     if hb[i]:
-        plt.plot(i-0.5,pa1s[i],"g2")
+        plt.plot(i-0.5,pa1s[i],"go")
     else:
-        plt.plot(i-0.5,pa1s[i],"r1")
+        plt.plot(i-0.5,pa1s[i],"ro")
 plt.ylim(-0.1,1.1)
 plt.show()
