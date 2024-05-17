@@ -27,13 +27,10 @@ for i in range(competition_num):
 
 #the opponent action history length that will be used to predict next. 
 history_length=4
-#minimum number of pattern that would be considered as valid
-#for example, if 0000 appears for 9 times, and 0001 appears for 10 times, and 10 is threshold
-#then only that for 0001 would be considered
 
 #input a list and decay rate, return the probability for next decision is cooperate
+#l with valid size of history_length
 def next_probability(l,decay):
-    # l=[1]+l
     a=0
     b=0
     factor=1
@@ -50,11 +47,10 @@ def decision(altruism,decay,hb):
     ea=(m01[0]-m11[0])*pb1+(m00[0]-m10[0])*pb0
     
     #expected gain of opponent
-    # pb0=max(0.25,pb0)#avoid overflow exponent
-    #trust between 0 and 3 with 0.25 above
-    trust=pb1*4#pb1/pb0#
+    #trust be 4 times probability estimated to cooperate
+    trust=pb1*4
     #consider opponent gain by changing from cheat to cooperate, with altruism and probability variable
-    eb=(m11[1]-m01[1])*pb0+(m10[1]-m00[1])*pb1+altruism+trust
+    eb=(m11[1]-m01[1])*pb1+(m10[1]-m00[1])*pb0+altruism+trust
     
     #softmax to acquire probability
     pa1=np.exp(eb)/(np.exp(eb)+np.exp(ea))
@@ -64,7 +60,7 @@ def decision(altruism,decay,hb):
 def model_best(response,action):
     altruism=0
     decay=0
-    min_error=sum(action)
+    min_error=sum(action)#highest possible error value
     #perform grid search on altruism
     for d in range(0,21):#search from 0 to 1 with interval of 0.05
         d/=20
@@ -179,7 +175,7 @@ print(error)
 altruism,decay,min_error=model_best(distribution,[100]*16)
 print(altruism,decay)
 model_p=[]
-print("{:<16s}    {:<6}{:<6s}    {:<6s}    {:<6}".format("opponent action","n","actual p","model p","error n"))
+print("{:<16}    {:<6}{:<6}    {:<6}     {:<6}".format("opponent actions","n","actual p","model p","error n"))
 for i in range(2**history_length):
     h=[int(j) for j in bin(i)[2:].zfill(history_length)]
     p=decision(altruism,decay,h)
@@ -190,26 +186,33 @@ for i in range(2**history_length):
     else:
         ac=frequency_action_self_cooperate[i]/frequency_action_self_received[i]
     error1=n*abs(ac-p)
-    print("{:<16s}    {:<6}{:<6f}    {:<6f}    {:<6f}".format(str(h),n,ac,p,error1))
+    print("{:<16}    {:<6}{:<6f}    {:<6f}    {:<6f}".format(str(h),n,ac,p,error1))
 # plt.imshow([model_p[i:i+4] for i in range(0,16,4)])
 '''
 
 '''
 #self experimental data
 actual=[0,25,25,50,25,50,50,75,25,50,50,75,50,75,75,100]
-actual=[1, 40, 20, 40, 10, 20, 45, 80, 5, 40, 60, 30, 10, 80, 90, 99]#not mine
+# actual=[1, 40, 20, 40, 10, 20, 45, 80, 5, 40, 60, 30, 10, 80, 90, 99]#not mine
 # actual=[5,60,40,80,30,60,45,90,20,55,45,70,35,65,50,99]#mine
-# plt.imshow([actual[i:i+4] for i in range(0,16,4)])
+
 
 altruism,decay,min_error=model_best(actual,[100]*16)
 print(altruism,decay)
 ps=[]
-print("{:<16s}    {:<6}      {:<6}".format("opponent action","data","model"))
+print("{:<16s}    {:<6}    {:<6}      {:<6}".format("opponent action","data","model","diff"))
 for i in range(2**history_length):
     h=[int(j) for j in bin(i)[2:].zfill(history_length)]
     p=decision(altruism,decay,h)
     ps.append(p)
-    print("{:<16s}    {:<6}    {:<6f}".format(str(h),actual[i]/100,p))
-plt.imshow([ps[i:i+4] for i in range(0,16,4)])
-print(sum(ps)/1600)
+    print("{:<16s}    {:<6}    {:<6f}    {:<6f}".format(str(h),actual[i]/100,p,abs(actual[i]/100-p)))
+
+print(min_error/1600)
+# plt.imshow([actual[i:i+4] for i in range(0,16,4)])#actual data
+plt.imshow([ps[i:i+4] for i in range(0,16,4)])#predicted data
+for x in range(4):
+    for y in range(4):
+        plt.text(x,y,str(bin(4*y+x)[2:].zfill(history_length)))
+plt.axis('off')
+plt.show()
 '''
