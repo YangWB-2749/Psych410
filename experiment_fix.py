@@ -67,9 +67,9 @@ def model_best(response,action):
     decay=0
     min_error=100
     #perform grid search on altruism
-    for d in range(0,11):#search from 0 to 1 with interval of 0.1
-        d/=10
-        for a in range(-100,50):#search from -10 to 5 with interval of 0.1
+    for d in range(1,21):#search from 0 to 1 with interval of 0.05
+        d/=20
+        for a in range(-100,60):#search from -10 to 5 with interval of 0.1
             a/=10
             acc_error=0
             for i in range(2**history_length):
@@ -80,58 +80,20 @@ def model_best(response,action):
                 p=decision(a,d,h)
                 
                 acc_error+=action[i]*abs(p-(response[i]/action[i]))
-                distribution.append(p)
             #compare distribution to real response and action
             if min_error>acc_error:
                 min_error=acc_error
                 decay=d
                 altruism=a
+    # print(altruism,decay)
     return altruism,decay,min_error
 
-errors=[]
-counter=0
-for competition in competitions:
-    # counter+=1
-    # if counter>50:
-    #     break
-    action_player=[i=="C" for i in competition["action_player"]]
-    action_opponent=[i=="C" for i in competition["action_opponent"]]
-    
+def analyze(action_player,action_opponent):
     #count the occurance of each pattern in history_length
     #number for 0000, 0001, 0010, 0011, ... , 1110, 1111
     #Given self action, the probability the opponent would cooperate
-    frequency_action_opponent_cooperate=[0]*(2**history_length)
-    frequency_action_self=[0]*(2**history_length)
-    #jump over several initial warm up rounds
-    for i in range(history_length,100):
-        action=action_player[i-history_length-1:i-1]
-        #convert bit 8421 to integer
-        index=0
-        for a in action:
-            index*=2
-            index+=a
-        frequency_action_self[index]+=1
-        if action_opponent[i]==1:
-            frequency_action_opponent_cooperate[index]+=1
-    distribution=[]
-    for i in range(2**history_length):
-        # print(bin(i)[2:].zfill(history_length),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
-        if frequency_action_self[i]:
-            distribution.append(frequency_action_opponent_cooperate[i]/frequency_action_self[i])
-        else:
-            distribution.append(-1)
-    # print(distribution)
-    estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_opponent_cooperate,frequency_action_self)
-    # print(estimated_altruism,estimated_decay,estimated_error/90)
-    
-    errors.append(estimated_error/(100-history_length))
-    
-    
-    
-    
-    
-    frequency_action_opponent_cooperate=[0]*(2**history_length)
-    frequency_action_self=[0]*(2**history_length)
+    frequency_action_self_cooperate=[0]*(2**history_length)
+    frequency_action_self_received=[0]*(2**history_length)
     #jump over several initial warm up rounds
     for i in range(history_length,100):
         action=action_opponent[i-history_length-1:i-1]
@@ -140,24 +102,92 @@ for competition in competitions:
         for a in action:
             index*=2
             index+=a
-        frequency_action_self[index]+=1
+        frequency_action_self_received[index]+=1
+        #if player select cooperate
         if action_player[i]==1:
-            frequency_action_opponent_cooperate[index]+=1
+            frequency_action_self_cooperate[index]+=1
     distribution=[]
     for i in range(2**history_length):
-        # print(bin(i)[2:].zfill(history_length),frequency_action_opponent_cooperate[i],"/",frequency_action_self[i])
-        if frequency_action_self[i]:
-            distribution.append(frequency_action_opponent_cooperate[i]/frequency_action_self[i])
+        # print(bin(i)[2:].zfill(history_length),frequency_action_self_cooperate[i],"/",frequency_action_self_received[i])
+        if frequency_action_self_received[i]:
+            distribution.append(frequency_action_self_cooperate[i]/frequency_action_self_received[i])
         else:
             distribution.append(-1)
     # print(distribution)
-    estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_opponent_cooperate,frequency_action_self)
+    estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_self_cooperate,frequency_action_self_received)
+    error=estimated_error/(100-history_length)
     # print(estimated_altruism,estimated_decay,estimated_error/90)
-    
-    errors.append(estimated_error/(100-history_length))
-    
-    # break
-print(errors,sum(errors)/len(errors))
+    return error
 
+errors=[]
+counter=0
+for competition in competitions:
+    # if counter>50:
+    #     break
+    action_player1=[i=="C" for i in competition["action_player"]]
+    action_player2=[i=="C" for i in competition["action_opponent"]]
+    
+    errors.append(analyze(action_player1,action_player2))
+    errors.append(analyze(action_player2,action_player1))
+    if errors[-2]>0.25 or errors[-1]>0.25:
+        print(counter)
+    counter+=1
+    
+print("average error",sum(errors)/len(errors))
+#display error distribution
 plt.hist(errors)
+plt.xlabel("error")
+plt.ylabel("number")
 plt.show()
+#print max error index
+# print(max(errors),errors.index(min(errors)))
+'''
+competition=competitions[22]
+action_player1=[i=="C" for i in competition["action_player"]]
+action_player2=[i=="C" for i in competition["action_opponent"]]
+
+frequency_action_self_cooperate=[0]*(2**history_length)
+frequency_action_self_received=[0]*(2**history_length)
+#jump over several initial warm up rounds
+for i in range(history_length,100):
+    action=action_player2[i-history_length-1:i-1]
+    #convert bit 8421 to integer
+    index=0
+    for a in action:
+        index*=2
+        index+=a
+    frequency_action_self_received[index]+=1
+    #if player select cooperate
+    if action_player1[i]==1:
+        frequency_action_self_cooperate[index]+=1
+distribution=[]
+for i in range(2**history_length):
+    print(bin(i)[2:].zfill(history_length),frequency_action_self_cooperate[i],"/",frequency_action_self_received[i])
+    if frequency_action_self_received[i]:
+        distribution.append(frequency_action_self_cooperate[i]/frequency_action_self_received[i])
+    else:
+        distribution.append(-0.1)
+print(distribution)
+# plt.imshow([distribution[i:i+4] for i in range(0,16,4)])
+estimated_altruism,estimated_decay,estimated_error=model_best(frequency_action_self_cooperate,frequency_action_self_received)
+error=estimated_error/(100-history_length)
+print(error)
+altruism,decay,min_error=model_best(distribution,[100]*16)
+model_p=[]
+for i in range(2**history_length):
+    h=[int(j) for j in bin(i)[2:].zfill(history_length)]
+    p=decision(altruism,decay,h)
+    model_p.append(p*frequency_action_self_received)
+    print("{:<16s}    {:<6f}    {:<6f}".format(str(h),p,distribution[i]/(100-history_length)))
+plt.imshow([model_p[i:i+4] for i in range(0,16,4)])
+'''
+
+# actual=[0,25,25,50,25,50,50,75,25,50,50,75,50,75,75,100]
+# plt.imshow([actual[i:i+4] for i in range(0,16,4)])
+
+# altruism,decay,min_error=model_best(actual,[100]*16)
+# for i in range(2**history_length):
+#     h=[int(j) for j in bin(i)[2:].zfill(history_length)]
+#     p=decision(altruism,decay,h)
+#     print("{:<16s}    {:<6f}    {:<6f}".format(str(h),p,actual[i]/100))
+    

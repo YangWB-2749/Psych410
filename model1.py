@@ -127,10 +127,10 @@ plt.plot(pa1s,"k-")
 plt.plot(pb1s,"--")
 
 for i in range(len(opponent_action)):
-    if ha[i]:
-        plt.plot(i,pa1s[i],"gx")
-    else:
-        plt.plot(i,pa1s[i],"rx")
+    # if ha[i]:
+    #     plt.plot(i,pa1s[i],"gx")
+    # else:
+    #     plt.plot(i,pa1s[i],"rx")
         
     if hb[i]:
         plt.plot(i-0.5,pa1s[i],"g2")
